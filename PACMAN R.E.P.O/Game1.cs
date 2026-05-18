@@ -2095,7 +2095,7 @@ namespace PACMAN_R.E.P.O
 
             spriteBatch.Draw(pixel, playerRectangle, Color.Cyan);
         }
-
+        //
         #endregion
     }
 }
