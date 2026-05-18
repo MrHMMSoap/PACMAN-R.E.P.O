@@ -11,6 +11,9 @@
         /// <summary>Main menu where the player can start a new game or load a saved game.</summary>
         MainMenu,
 
+        /// <summary>Tutorial screen showing game legend and controls.</summary>
+        Tutorial,
+
         /// <summary>Active gameplay mode where the player explores and collects items.</summary>
         Playing,
 
