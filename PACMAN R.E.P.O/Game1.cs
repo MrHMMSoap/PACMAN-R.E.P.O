@@ -179,7 +179,8 @@ namespace PACMAN_R.E.P.O
         /// <summary>Message displayed on the main menu screen.</summary>
         private string mainMenuMessage = "N = New Save | L = Load Save";
 
-        private bool isPaused = false;
+        /// <summary>Currently selected option in the pause menu (0 = Resume, 1 = Main Menu).</summary>
+        private int pauseMenuSelection = 0;
 
         #endregion
      
@@ -277,12 +278,6 @@ namespace PACMAN_R.E.P.O
         {
             KeyboardState keyboard = Keyboard.GetState();
 
-            // Allow exit at any time
-            if (keyboard.IsKeyDown(Keys.Escape))
-            {
-                Exit();
-            }
-
             // Route to appropriate update method based on current state
             if (gameStateManager.CurrentState == GameState.Login)
             {
@@ -294,6 +289,13 @@ namespace PACMAN_R.E.P.O
             }
             else if (gameStateManager.CurrentState == GameState.Playing)
             {
+                // Handle ESC to pause
+                if (WasKeyPressed(keyboard, Keys.Escape))
+                {
+                    gameStateManager.PauseGame();
+                    pauseMenuSelection = 0;
+                }
+
                 // Allow saving during gameplay
                 if (WasKeyPressed(keyboard, Keys.F5))
                 {
@@ -301,6 +303,10 @@ namespace PACMAN_R.E.P.O
                 }
 
                 UpdatePlaying(gameTime, keyboard);
+            }
+            else if (gameStateManager.CurrentState == GameState.Paused)
+            {
+                UpdatePaused(keyboard);
             }
             else if (gameStateManager.CurrentState == GameState.Shop)
             {
@@ -312,24 +318,15 @@ namespace PACMAN_R.E.P.O
 
                 UpdateShop(keyboard);
             }
+            else if (gameStateManager.CurrentState == GameState.GameOver)
+            {
+                UpdateGameOver(keyboard);
+            }
 
             // Store keyboard state for next frame's input detection
             previousKeyboardState = keyboard;
 
-            if (keyboard.IsKeyDown(Keys.Escape) &&
-                previousKeyboardState.IsKeyUp(Keys.Escape))
-            {
-                isPaused = !isPaused;
-            }
-
-            previousKeyboardState = keyboard;
-
-            if (isPaused)
-                return;
-
             base.Update(gameTime);
-
-            
         }
 
         #region Login System
@@ -508,6 +505,64 @@ namespace PACMAN_R.E.P.O
             if (WasKeyPressed(keyboard, Keys.L))
             {
                 LoadExistingSave();
+            }
+        }
+
+        /// <summary>
+        /// Updates the pause menu, handling navigation and selection.
+        /// </summary>
+        /// <param name="keyboard">Current keyboard state.</param>
+        private void UpdatePaused(KeyboardState keyboard)
+        {
+            // Navigate menu with W/S or Up/Down
+            if (WasKeyPressed(keyboard, Keys.W) || WasKeyPressed(keyboard, Keys.Up))
+            {
+                pauseMenuSelection--;
+                if (pauseMenuSelection < 0)
+                    pauseMenuSelection = 1;
+            }
+
+            if (WasKeyPressed(keyboard, Keys.S) || WasKeyPressed(keyboard, Keys.Down))
+            {
+                pauseMenuSelection++;
+                if (pauseMenuSelection > 1)
+                    pauseMenuSelection = 0;
+            }
+
+            // Select option with Enter or ESC to resume
+            if (WasKeyPressed(keyboard, Keys.Enter))
+            {
+                if (pauseMenuSelection == 0)
+                {
+                    // Resume game
+                    gameStateManager.ResumeGame();
+                }
+                else if (pauseMenuSelection == 1)
+                {
+                    // Return to main menu
+                    gameStateManager.ChangeState(GameState.MainMenu);
+                    mainMenuMessage = "N = New Save | L = Load Save";
+                }
+            }
+
+            // ESC also resumes the game
+            if (WasKeyPressed(keyboard, Keys.Escape))
+            {
+                gameStateManager.ResumeGame();
+            }
+        }
+
+        /// <summary>
+        /// Updates the game over screen, allowing the player to return to the main menu.
+        /// </summary>
+        /// <param name="keyboard">Current keyboard state.</param>
+        private void UpdateGameOver(KeyboardState keyboard)
+        {
+            // Return to main menu with Enter or ESC
+            if (WasKeyPressed(keyboard, Keys.Enter) || WasKeyPressed(keyboard, Keys.Escape))
+            {
+                gameStateManager.ChangeState(GameState.MainMenu);
+                mainMenuMessage = "N = New Save | L = Load Save";
             }
         }
 
@@ -1345,6 +1400,16 @@ namespace PACMAN_R.E.P.O
                 DrawWraith();
                 DrawGameplayHUD();
             }
+            else if (gameStateManager.CurrentState == GameState.Paused)
+            {
+                // Draw the game world behind the pause menu
+                DrawMap();
+                DrawPlayer();
+                DrawWraith();
+                DrawGameplayHUD();
+                // Draw pause menu overlay
+                DrawPausedHUD();
+            }
             else if (gameStateManager.CurrentState == GameState.Shop)
             {
                 DrawShopHUD();
@@ -1438,14 +1503,58 @@ namespace PACMAN_R.E.P.O
         /// </summary>
         private void DrawGameOverHUD()
         {
-            string text = "GAME OVER\nThe Wraith caught you.\nPress ESC to quit.";
+            string text = "GAME OVER\nThe Wraith caught you.\n\nPress Enter or ESC to return to Main Menu";
 
             Vector2 position = new Vector2(
-                graphics.PreferredBackBufferWidth / 2f - 170,
+                graphics.PreferredBackBufferWidth / 2f - 220,
                 graphics.PreferredBackBufferHeight / 2f - 50
             );
 
             spriteBatch.DrawString(hudFont, text, position, Color.Red);
+        }
+
+        /// <summary>
+        /// Draws the pause menu overlay with options to resume or return to main menu.
+        /// </summary>
+        private void DrawPausedHUD()
+        {
+            // Semi-transparent dark overlay
+            Rectangle overlay = new Rectangle(0, 0, graphics.PreferredBackBufferWidth, graphics.PreferredBackBufferHeight);
+            spriteBatch.Draw(pixel, overlay, Color.Black * 0.7f);
+
+            // Calculate center position
+            int centerX = graphics.PreferredBackBufferWidth / 2;
+            int centerY = graphics.PreferredBackBufferHeight / 2;
+            int lineHeight = 40;
+
+            // Title
+            string titleText = "PAUSED";
+            Vector2 titleSize = hudFont.MeasureString(titleText);
+            Vector2 titlePosition = new Vector2(centerX - titleSize.X / 2, centerY - 100);
+            spriteBatch.DrawString(hudFont, titleText, titlePosition, Color.Yellow);
+
+            // Menu options
+            string resumeText = "Resume Game";
+            string mainMenuText = "Return to Main Menu";
+
+            Vector2 resumeSize = hudFont.MeasureString(resumeText);
+            Vector2 mainMenuSize = hudFont.MeasureString(mainMenuText);
+
+            Vector2 resumePosition = new Vector2(centerX - resumeSize.X / 2, centerY);
+            Vector2 mainMenuPosition = new Vector2(centerX - mainMenuSize.X / 2, centerY + lineHeight);
+
+            // Highlight selected option
+            Color resumeColor = pauseMenuSelection == 0 ? Color.Cyan : Color.White;
+            Color mainMenuColor = pauseMenuSelection == 1 ? Color.Cyan : Color.White;
+
+            spriteBatch.DrawString(hudFont, resumeText, resumePosition, resumeColor);
+            spriteBatch.DrawString(hudFont, mainMenuText, mainMenuPosition, mainMenuColor);
+
+            // Instructions
+            string instructionsText = "W/S or Arrow Keys to navigate | Enter to select | ESC to resume";
+            Vector2 instructionsSize = hudFont.MeasureString(instructionsText);
+            Vector2 instructionsPosition = new Vector2(centerX - instructionsSize.X / 2, centerY + lineHeight * 3);
+            spriteBatch.DrawString(hudFont, instructionsText, instructionsPosition, Color.Gray);
         }
 
         /// <summary>
@@ -1516,7 +1625,7 @@ namespace PACMAN_R.E.P.O
             spriteBatch.DrawString(hudFont, extractionText, new Vector2(x, y + lineHeight * 5), Color.White);
 
             // Controls hint at bottom of screen
-            string controlsText = "WASD: Move | LShift: Sprint | E: Interact | F5: Save | ESC: Quit";
+            string controlsText = "WASD: Move | LShift: Sprint | E: Interact | F5: Save | ESC: Pause";
             spriteBatch.DrawString(hudFont, controlsText, new Vector2(x, graphics.PreferredBackBufferHeight - 35), Color.LightGray);
 
             // Show extraction complete message
