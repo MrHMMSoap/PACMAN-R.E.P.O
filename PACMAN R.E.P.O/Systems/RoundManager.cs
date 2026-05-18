@@ -7,6 +7,17 @@
         public int BaseExtractionRequirement { get; private set; } = 500;
         public int ExtractionIncreasePerRound { get; private set; } = 250;
 
+        public void SetRound(int round)
+        {
+            if (round < 1)
+            {
+                CurrentRound = 1;
+                return;
+            }
+
+            CurrentRound = round;
+        }
+
         public void NextRound()
         {
             CurrentRound++;
