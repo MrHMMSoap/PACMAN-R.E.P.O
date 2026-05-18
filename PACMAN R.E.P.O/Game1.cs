@@ -179,6 +179,8 @@ namespace PACMAN_R.E.P.O
         /// <summary>Message displayed on the main menu screen.</summary>
         private string mainMenuMessage = "N = New Save | L = Load Save";
 
+        private bool isPaused = false;
+
         #endregion
      
 
@@ -314,7 +316,20 @@ namespace PACMAN_R.E.P.O
             // Store keyboard state for next frame's input detection
             previousKeyboardState = keyboard;
 
+            if (keyboard.IsKeyDown(Keys.Escape) &&
+                previousKeyboardState.IsKeyUp(Keys.Escape))
+            {
+                isPaused = !isPaused;
+            }
+
+            previousKeyboardState = keyboard;
+
+            if (isPaused)
+                return;
+
             base.Update(gameTime);
+
+            
         }
 
         #region Login System
