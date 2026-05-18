@@ -717,6 +717,8 @@ namespace PACMAN_R.E.P.O
             wraithPosition = FindWraithSpawnPosition();
             wraithHasTargetTile = false;
             wraithDamageCooldown = 0f;
+
+            
         }
 
         #endregion
