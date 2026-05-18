@@ -137,7 +137,7 @@ namespace PACMAN_R.E.P.O
         private float wraithSlowSpeed = 45f;
 
         /// <summary>Wraith's movement speed when enraged after being seen.</summary>
-        private float wraithRageSpeed = 180f;
+        private float wraithRageSpeed = 140f;
 
         /// <summary>Cooldown timer to prevent continuous damage from the wraith.</summary>
         private float wraithDamageCooldown = 0f;
