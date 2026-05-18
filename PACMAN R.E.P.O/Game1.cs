@@ -1516,7 +1516,7 @@ namespace PACMAN_R.E.P.O
             spriteBatch.DrawString(hudFont, extractionText, new Vector2(x, y + lineHeight * 5), Color.White);
 
             // Controls hint at bottom of screen
-            string controlsText = "WASD: Move | E: Interact | ESC: Quit";
+            string controlsText = "WASD: Move | LShift: Sprint | E: Interact | F5: Save | ESC: Quit";
             spriteBatch.DrawString(hudFont, controlsText, new Vector2(x, graphics.PreferredBackBufferHeight - 35), Color.LightGray);
 
             // Show extraction complete message
