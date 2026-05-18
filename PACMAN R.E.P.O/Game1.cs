@@ -63,6 +63,11 @@ namespace PACMAN_R.E.P.O
         private Vector2 wraithSize = new Vector2(22, 22);
 
         private Duck duck;
+        private Vector2 duckPosition;
+        private Vector2 duckSize = new Vector2(15, 15);
+
+        private Point duckTargetTile;
+        private bool duckHasTargetTile = false;
 
         private Point wraithTargetTile;
         private bool wraithHasTargetTile = false;
@@ -130,7 +135,8 @@ namespace PACMAN_R.E.P.O
             wraithPosition = FindWraithSpawnPosition();
             wraithHasTargetTile = false;
 
-
+            duck = new Duck();
+            duckPosition = FindDuckSpawnPosition();
 
             string databasePath = Path.Combine(AppContext.BaseDirectory, "save.db");
             sqlHandler = new SQLHandler(databasePath);
@@ -879,6 +885,75 @@ namespace PACMAN_R.E.P.O
             return FindFallbackWraithPosition(playerTile);
         }
 
+        private Vector2 FindDuckSpawnPosition()
+        {
+            Point playerTile = new Point(
+                (int)((playerPosition.X + playerSize.X / 2f) / TileSize),
+                (int)((playerPosition.Y + playerSize.Y / 2f) / TileSize)
+            );
+
+            Point wraithTile = new Point(
+                (int)((wraithPosition.X + wraithSize.X / 2f) / TileSize),
+                (int)((wraithPosition.Y + wraithSize.Y / 2f) / TileSize)
+            );
+
+            for (int x = 1; x < tileMap.Width - 1; x++)
+            {
+                for (int y = 1; y < tileMap.Height - 1; y++)
+                {
+                    Tile tile = tileMap.Tiles[x, y];
+
+                    if (!tile.IsWalkable)
+                    {
+                        continue;
+                    }
+
+                    if (tile.Type == TileType.Spawn ||
+                        tile.Type == TileType.Extraction)
+                    {
+                        continue;
+                    }
+
+                    Point duckTile = new Point(x, y);
+
+                    // Måste gå att nå spelaren
+                    List<Point> pathToPlayer = FindPath(duckTile, playerTile);
+
+                    if (pathToPlayer.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    // Får inte vara nära spelaren
+                    float distanceToPlayer = Vector2.Distance(
+                        GetTileCenter(x, y, duckSize),
+                        playerPosition
+                    );
+
+                    if (distanceToPlayer < TileSize * 6)
+                    {
+                        continue;
+                    }
+
+                    // Får inte vara nära Wraith
+                    float distanceToWraith = Vector2.Distance(
+                        GetTileCenter(x, y, duckSize),
+                        wraithPosition
+                    );
+
+                    if (distanceToWraith < TileSize * 5)
+                    {
+                        continue;
+                    }
+
+                    return GetTileCenter(x, y, duckSize);
+                }
+            }
+
+            // fallback
+            return FindFallbackWraithPosition(playerTile);
+        }
+
         private Vector2 FindFallbackWraithPosition(Point playerTile)
         {
             for (int radius = 5; radius < 15; radius++)
@@ -941,6 +1016,7 @@ namespace PACMAN_R.E.P.O
                 DrawMap();
                 DrawPlayer();
                 DrawWraith();
+                DrawDuck();
                 DrawGameplayHUD();
             }
             else if (gameStateManager.CurrentState == GameState.Shop)
@@ -1060,6 +1136,18 @@ namespace PACMAN_R.E.P.O
                 : Color.Purple;
 
             spriteBatch.Draw(pixel, wraithRectangle, color);
+        }
+
+        private void DrawDuck()
+        {
+            Rectangle duckRectangle = new Rectangle(
+                (int)(duckPosition.X - cameraPosition.X),
+                (int)(duckPosition.Y - cameraPosition.Y),
+                (int)duckSize.X,
+                (int)duckSize.Y
+            );
+
+            spriteBatch.Draw(pixel, duckRectangle, Color.Yellow);
         }
 
         private void DrawGameplayHUD()
