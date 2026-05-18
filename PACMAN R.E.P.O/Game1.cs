@@ -84,6 +84,9 @@ namespace PACMAN_R.E.P.O
 
         private string mainMenuMessage = "N = New Save | L = Load Save";
 
+        private bool isPaused = false;
+
+
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -183,7 +186,20 @@ namespace PACMAN_R.E.P.O
 
             previousKeyboardState = keyboard;
 
+            if (keyboard.IsKeyDown(Keys.Escape) &&
+                previousKeyboardState.IsKeyUp(Keys.Escape))
+            {
+                isPaused = !isPaused;
+            }
+
+            previousKeyboardState = keyboard;
+
+            if (isPaused)
+                return;
+
             base.Update(gameTime);
+
+            
         }
 
         private void UpdateLogin(KeyboardState keyboard)
@@ -1522,6 +1538,9 @@ namespace PACMAN_R.E.P.O
                     return Color.Magenta;
             }
         }
+
+        
+
 
         private void DrawPlayer()
         {
