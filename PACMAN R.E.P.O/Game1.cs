@@ -128,6 +128,13 @@ namespace PACMAN_R.E.P.O
         private Vector2 wraithSize = new Vector2(22, 22);
 
         /// <summary>Current tile the wraith is pathfinding towards.</summary>
+        private Duck duck;
+        private Vector2 duckPosition;
+        private Vector2 duckSize = new Vector2(15, 15);
+
+        private Point duckTargetTile;
+        private bool duckHasTargetTile = false;
+
         private Point wraithTargetTile;
 
         /// <summary>Whether the wraith has a valid target tile for pathfinding.</summary>
@@ -246,6 +253,9 @@ namespace PACMAN_R.E.P.O
             wraithHasTargetTile = false;
 
             // Initialize SQLite database for user accounts and saves
+            duck = new Duck();
+            duckPosition = FindDuckSpawnPosition();
+
             string databasePath = Path.Combine(AppContext.BaseDirectory, "save.db");
             sqlHandler = new SQLHandler(databasePath);
             sqlHandler.InitializeDatabase();
@@ -1336,6 +1346,75 @@ namespace PACMAN_R.E.P.O
         /// </summary>
         /// <param name="playerTile">The player's current tile position.</param>
         /// <returns>A valid wraith spawn position, or player position as last resort.</returns>
+        private Vector2 FindDuckSpawnPosition()
+        {
+            Point playerTile = new Point(
+                (int)((playerPosition.X + playerSize.X / 2f) / TileSize),
+                (int)((playerPosition.Y + playerSize.Y / 2f) / TileSize)
+            );
+
+            Point wraithTile = new Point(
+                (int)((wraithPosition.X + wraithSize.X / 2f) / TileSize),
+                (int)((wraithPosition.Y + wraithSize.Y / 2f) / TileSize)
+            );
+
+            for (int x = 1; x < tileMap.Width - 1; x++)
+            {
+                for (int y = 1; y < tileMap.Height - 1; y++)
+                {
+                    Tile tile = tileMap.Tiles[x, y];
+
+                    if (!tile.IsWalkable)
+                    {
+                        continue;
+                    }
+
+                    if (tile.Type == TileType.Spawn ||
+                        tile.Type == TileType.Extraction)
+                    {
+                        continue;
+                    }
+
+                    Point duckTile = new Point(x, y);
+
+                    // Måste gå att nå spelaren
+                    List<Point> pathToPlayer = FindPath(duckTile, playerTile);
+
+                    if (pathToPlayer.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    // Får inte vara nära spelaren
+                    float distanceToPlayer = Vector2.Distance(
+                        GetTileCenter(x, y, duckSize),
+                        playerPosition
+                    );
+
+                    if (distanceToPlayer < TileSize * 6)
+                    {
+                        continue;
+                    }
+
+                    // Får inte vara nära Wraith
+                    float distanceToWraith = Vector2.Distance(
+                        GetTileCenter(x, y, duckSize),
+                        wraithPosition
+                    );
+
+                    if (distanceToWraith < TileSize * 5)
+                    {
+                        continue;
+                    }
+
+                    return GetTileCenter(x, y, duckSize);
+                }
+            }
+
+            // fallback
+            return FindFallbackWraithPosition(playerTile);
+        }
+
         private Vector2 FindFallbackWraithPosition(Point playerTile)
         {
             // Search in expanding rings from radius 5 to 15
@@ -1429,6 +1508,7 @@ namespace PACMAN_R.E.P.O
                 DrawMap();
                 DrawPlayer();
                 DrawWraith();
+                DrawDuck();
                 DrawGameplayHUD();
                 // Draw pause menu overlay
                 DrawPausedHUD();
@@ -1714,6 +1794,18 @@ namespace PACMAN_R.E.P.O
         /// <summary>
         /// Draws the gameplay HUD showing stats, round info, and extraction progress.
         /// </summary>
+        private void DrawDuck()
+        {
+            Rectangle duckRectangle = new Rectangle(
+                (int)(duckPosition.X - cameraPosition.X),
+                (int)(duckPosition.Y - cameraPosition.Y),
+                (int)duckSize.X,
+                (int)duckSize.Y
+            );
+
+            spriteBatch.Draw(pixel, duckRectangle, Color.Yellow);
+        }
+
         private void DrawGameplayHUD()
         {
             int x = 15;
