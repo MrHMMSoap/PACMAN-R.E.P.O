@@ -287,6 +287,10 @@ namespace PACMAN_R.E.P.O
             {
                 UpdateMainMenu(keyboard);
             }
+            else if (gameStateManager.CurrentState == GameState.Tutorial)
+            {
+                UpdateTutorial(keyboard);
+            }
             else if (gameStateManager.CurrentState == GameState.Playing)
             {
                 // Handle ESC to pause
@@ -509,6 +513,19 @@ namespace PACMAN_R.E.P.O
         }
 
         /// <summary>
+        /// Updates the tutorial screen, waiting for Space or Enter to continue to gameplay.
+        /// </summary>
+        /// <param name="keyboard">Current keyboard state.</param>
+        private void UpdateTutorial(KeyboardState keyboard)
+        {
+            // Continue to gameplay with Space or Enter
+            if (WasKeyPressed(keyboard, Keys.Space) || WasKeyPressed(keyboard, Keys.Enter))
+            {
+                gameStateManager.StartGame();
+            }
+        }
+
+        /// <summary>
         /// Updates the pause menu, handling navigation and selection.
         /// </summary>
         /// <param name="keyboard">Current keyboard state.</param>
@@ -567,7 +584,7 @@ namespace PACMAN_R.E.P.O
         }
 
         /// <summary>
-        /// Initializes a new game save with default values and transitions to gameplay.
+        /// Initializes a new game save with default values and transitions to the tutorial screen.
         /// Resets all player stats, round counter, and creates a fresh map.
         /// </summary>
         private void StartNewSave()
@@ -597,8 +614,8 @@ namespace PACMAN_R.E.P.O
             wraithHasTargetTile = false;
             wraithDamageCooldown = 0f;
 
-            // Transition to gameplay
-            gameStateManager.StartGame();
+            // Transition to tutorial screen first
+            gameStateManager.ChangeState(GameState.Tutorial);
 
             // Save immediately so the player has a save file
             SaveCurrentGame();
@@ -1393,6 +1410,10 @@ namespace PACMAN_R.E.P.O
             {
                 DrawMainMenuHUD();
             }
+            else if (gameStateManager.CurrentState == GameState.Tutorial)
+            {
+                DrawTutorialHUD();
+            }
             else if (gameStateManager.CurrentState == GameState.Playing)
             {
                 DrawMap();
@@ -1496,6 +1517,95 @@ namespace PACMAN_R.E.P.O
 
             // Status message
             spriteBatch.DrawString(hudFont, mainMenuMessage, new Vector2(x, y), Color.White);
+        }
+
+        /// <summary>
+        /// Draws the tutorial/legend screen explaining tile colors and controls.
+        /// </summary>
+        private void DrawTutorialHUD()
+        {
+            GraphicsDevice.Clear(Color.Black);
+
+            int x = 80;
+            int y = 50;
+            int lineHeight = 36;
+            int legendSize = 20;
+            int legendPadding = 10;
+
+            // Title
+            spriteBatch.DrawString(hudFont, "GAME LEGEND & CONTROLS", new Vector2(x, y), Color.Gold);
+            y += lineHeight * 2;
+
+            // Legend section
+            spriteBatch.DrawString(hudFont, "MAP COLORS:", new Vector2(x, y), Color.White);
+            y += lineHeight;
+
+            // Spawn point
+            Texture2D spawnSquare = new Texture2D(GraphicsDevice, legendSize, legendSize);
+            Color[] spawnData = new Color[legendSize * legendSize];
+            for (int i = 0; i < spawnData.Length; i++) spawnData[i] = Color.Blue;
+            spawnSquare.SetData(spawnData);
+            spriteBatch.Draw(spawnSquare, new Vector2(x + legendPadding, y), Color.White);
+            spriteBatch.DrawString(hudFont, "Spawn Point (Start & Round Finish)", new Vector2(x + legendSize + 30, y - 5), Color.LightBlue);
+            y += lineHeight;
+
+            // Player
+            Texture2D playerSquare = new Texture2D(GraphicsDevice, legendSize, legendSize);
+            Color[] playerData = new Color[legendSize * legendSize];
+            for (int i = 0; i < playerData.Length; i++) playerData[i] = Color.Gold;
+            playerSquare.SetData(playerData);
+            spriteBatch.Draw(playerSquare, new Vector2(x + legendPadding, y), Color.White);
+            spriteBatch.DrawString(hudFont, "Your Character", new Vector2(x + legendSize + 30, y - 5), Color.Gold);
+            y += lineHeight;
+
+            // Items
+            Texture2D itemSquare = new Texture2D(GraphicsDevice, legendSize, legendSize);
+            Color[] itemData = new Color[legendSize * legendSize];
+            for (int i = 0; i < itemData.Length; i++) itemData[i] = Color.Yellow;
+            itemSquare.SetData(itemData);
+            spriteBatch.Draw(itemSquare, new Vector2(x + legendPadding, y), Color.White);
+            spriteBatch.DrawString(hudFont, "Items (Collect for value)", new Vector2(x + legendSize + 30, y - 5), Color.Yellow);
+            y += lineHeight;
+
+            // Wraith
+            Texture2D wraithSquare = new Texture2D(GraphicsDevice, legendSize, legendSize);
+            Color[] wraithData = new Color[legendSize * legendSize];
+            for (int i = 0; i < wraithData.Length; i++) wraithData[i] = Color.Red;
+            wraithSquare.SetData(wraithData);
+            spriteBatch.Draw(wraithSquare, new Vector2(x + legendPadding, y), Color.White);
+            spriteBatch.DrawString(hudFont, "Wraith (Avoid or die!)", new Vector2(x + legendSize + 30, y - 5), Color.Red);
+            y += lineHeight;
+
+            // Extraction
+            Texture2D extractSquare = new Texture2D(GraphicsDevice, legendSize, legendSize);
+            Color[] extractData = new Color[legendSize * legendSize];
+            for (int i = 0; i < extractData.Length; i++) extractData[i] = Color.Green;
+            extractSquare.SetData(extractData);
+            spriteBatch.Draw(extractSquare, new Vector2(x + legendPadding, y), Color.White);
+            spriteBatch.DrawString(hudFont, "Extraction Point (Sell items)", new Vector2(x + legendSize + 30, y - 5), Color.LightGreen);
+            y += lineHeight * 2;
+
+            // Controls section
+            spriteBatch.DrawString(hudFont, "CONTROLS:", new Vector2(x, y), Color.White);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "WASD - Move your character", new Vector2(x + legendPadding, y), Color.Cyan);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "LShift - Sprint (uses stamina)", new Vector2(x + legendPadding, y), Color.Cyan);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "E - Interact (pick up items)", new Vector2(x + legendPadding, y), Color.Cyan);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "F5 - Quick save", new Vector2(x + legendPadding, y), Color.Cyan);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "ESC - Pause game", new Vector2(x + legendPadding, y), Color.Cyan);
+            y += lineHeight * 2;
+
+            // Continue prompt
+            spriteBatch.DrawString(hudFont, "Press SPACE or ENTER to start playing!", new Vector2(x, y), Color.Yellow);
         }
 
         /// <summary>
