@@ -62,6 +62,8 @@ namespace PACMAN_R.E.P.O
         private Vector2 wraithPosition;
         private Vector2 wraithSize = new Vector2(22, 22);
 
+        private Duck duck;
+
         private Point wraithTargetTile;
         private bool wraithHasTargetTile = false;
 
@@ -127,6 +129,8 @@ namespace PACMAN_R.E.P.O
             wraith = new Wraith();
             wraithPosition = FindWraithSpawnPosition();
             wraithHasTargetTile = false;
+
+
 
             string databasePath = Path.Combine(AppContext.BaseDirectory, "save.db");
             sqlHandler = new SQLHandler(databasePath);
@@ -346,6 +350,8 @@ namespace PACMAN_R.E.P.O
             wraithHasTargetTile = false;
             wraithDamageCooldown = 0f;
 
+         
+
             gameStateManager.StartGame();
 
             SaveCurrentGame();
@@ -441,6 +447,8 @@ namespace PACMAN_R.E.P.O
             wraithPosition = FindWraithSpawnPosition();
             wraithHasTargetTile = false;
             wraithDamageCooldown = 0f;
+
+            
         }
 
         private void UpdatePlaying(GameTime gameTime, KeyboardState keyboard)
