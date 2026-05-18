@@ -5,6 +5,7 @@ using PACMAN_R.E.P.O.Items;
 using PACMAN_R.E.P.O.Map;
 using PACMAN_R.E.P.O.Monsters;
 using PACMAN_R.E.P.O.Systems;
+using PACMAN_R.E.P.O.Save;
 using PlayerEntity = PACMAN_R.E.P.O.Entities.Player;
 using System;
 using System.Collections.Generic;
@@ -65,13 +66,23 @@ namespace PACMAN_R.E.P.O
         private bool wraithHasTargetTile = false;
 
         private float wraithSlowSpeed = 45f;
-        private float wraithRageSpeed = 115f;
+        private float wraithRageSpeed = 180f;
 
         private float wraithDamageCooldown = 0f;
         private float wraithDamageCooldownTime = 1.0f;
         private int wraithDamage = 20;
 
         private HealthSystem healthSystem;
+
+        private SQLHandler sqlHandler;
+
+        private string currentUsername = "";
+        private string usernameInput = "";
+        private string passwordInput = "";
+        private bool typingPassword = false;
+        private string loginMessage = "Enter username and password. Enter = Login | F2 = Create Account";
+
+        private string mainMenuMessage = "N = New Save | L = Load Save";
 
         public Game1()
         {
@@ -105,7 +116,7 @@ namespace PACMAN_R.E.P.O
             shopManager = new ShopManager();
 
             gameStateManager = new GameStateManager();
-            gameStateManager.StartGame();
+            gameStateManager.ChangeState(GameState.Login);
 
             extractionGoalComplete = false;
 
@@ -116,6 +127,10 @@ namespace PACMAN_R.E.P.O
             wraith = new Wraith();
             wraithPosition = FindWraithSpawnPosition();
             wraithHasTargetTile = false;
+
+            string databasePath = Path.Combine(AppContext.BaseDirectory, "save.db");
+            sqlHandler = new SQLHandler(databasePath);
+            sqlHandler.InitializeDatabase();
 
             base.Initialize();
         }
@@ -139,18 +154,293 @@ namespace PACMAN_R.E.P.O
                 Exit();
             }
 
-            if (gameStateManager.CurrentState == GameState.Playing)
+            if (gameStateManager.CurrentState == GameState.Login)
             {
+                UpdateLogin(keyboard);
+            }
+            else if (gameStateManager.CurrentState == GameState.MainMenu)
+            {
+                UpdateMainMenu(keyboard);
+            }
+            else if (gameStateManager.CurrentState == GameState.Playing)
+            {
+                if (WasKeyPressed(keyboard, Keys.F5))
+                {
+                    SaveCurrentGame();
+                }
+
                 UpdatePlaying(gameTime, keyboard);
             }
             else if (gameStateManager.CurrentState == GameState.Shop)
             {
+                if (WasKeyPressed(keyboard, Keys.F5))
+                {
+                    SaveCurrentGame();
+                }
+
                 UpdateShop(keyboard);
             }
 
             previousKeyboardState = keyboard;
 
             base.Update(gameTime);
+        }
+
+        private void UpdateLogin(KeyboardState keyboard)
+        {
+            if (WasKeyPressed(keyboard, Keys.Tab))
+            {
+                typingPassword = !typingPassword;
+            }
+
+            if (WasKeyPressed(keyboard, Keys.Back))
+            {
+                if (typingPassword)
+                {
+                    if (passwordInput.Length > 0)
+                    {
+                        passwordInput = passwordInput.Substring(0, passwordInput.Length - 1);
+                    }
+                }
+                else
+                {
+                    if (usernameInput.Length > 0)
+                    {
+                        usernameInput = usernameInput.Substring(0, usernameInput.Length - 1);
+                    }
+                }
+            }
+
+            string typedCharacter = GetTypedCharacter(keyboard);
+
+            if (typedCharacter != "")
+            {
+                if (typingPassword)
+                {
+                    passwordInput += typedCharacter;
+                }
+                else
+                {
+                    usernameInput += typedCharacter;
+                }
+            }
+
+            if (WasKeyPressed(keyboard, Keys.Enter))
+            {
+                TryLogin();
+            }
+
+            if (WasKeyPressed(keyboard, Keys.F2))
+            {
+                TryCreateAccount();
+            }
+        }
+
+        private void TryLogin()
+        {
+            bool success = sqlHandler.ValidateLogin(usernameInput, passwordInput);
+
+            if (!success)
+            {
+                loginMessage = "Login failed. Check username/password or press F2 to create account.";
+                return;
+            }
+
+            currentUsername = usernameInput;
+            loginMessage = "Logged in as " + currentUsername;
+
+            gameStateManager.ChangeState(GameState.MainMenu);
+        }
+
+        private void TryCreateAccount()
+        {
+            bool success = sqlHandler.CreateUser(usernameInput, passwordInput);
+
+            if (!success)
+            {
+                loginMessage = "Could not create account. Username may already exist or fields are empty.";
+                return;
+            }
+
+            currentUsername = usernameInput;
+            loginMessage = "Account created. Logged in as " + currentUsername;
+
+            gameStateManager.ChangeState(GameState.MainMenu);
+        }
+
+        private string GetTypedCharacter(KeyboardState keyboard)
+        {
+            Keys[] pressedKeys = keyboard.GetPressedKeys();
+
+            foreach (Keys key in pressedKeys)
+            {
+                if (!WasKeyPressed(keyboard, key))
+                {
+                    continue;
+                }
+
+                if (key >= Keys.A && key <= Keys.Z)
+                {
+                    char character = (char)('a' + (key - Keys.A));
+                    return character.ToString();
+                }
+
+                if (key >= Keys.D0 && key <= Keys.D9)
+                {
+                    char character = (char)('0' + (key - Keys.D0));
+                    return character.ToString();
+                }
+
+                if (key >= Keys.NumPad0 && key <= Keys.NumPad9)
+                {
+                    char character = (char)('0' + (key - Keys.NumPad0));
+                    return character.ToString();
+                }
+
+                if (key == Keys.OemMinus)
+                {
+                    return "-";
+                }
+
+                if (key == Keys.OemPeriod)
+                {
+                    return ".";
+                }
+            }
+
+            return "";
+        }
+
+        private void UpdateMainMenu(KeyboardState keyboard)
+        {
+            if (WasKeyPressed(keyboard, Keys.N))
+            {
+                StartNewSave();
+            }
+
+            if (WasKeyPressed(keyboard, Keys.L))
+            {
+                LoadExistingSave();
+            }
+        }
+
+        private void StartNewSave()
+        {
+            playerStats = new PlayerEntity();
+            inventory = new Inventory(playerStats);
+
+            roundManager = new RoundManager();
+
+            extractionSystem = new ExtractionSystem();
+            extractionSystem.RequiredValue = roundManager.GetExtractionRequirement();
+
+            extractionGoalComplete = false;
+
+            tileMap = mapFileHandler.LoadMap(mapFilePath);
+            discoveredTiles = new bool[tileMap.Width, tileMap.Height];
+
+            playerPosition = FindSpawnPosition();
+
+            wraith = new Wraith();
+            wraithPosition = FindWraithSpawnPosition();
+            wraithHasTargetTile = false;
+            wraithDamageCooldown = 0f;
+
+            gameStateManager.StartGame();
+
+            SaveCurrentGame();
+
+            Window.Title = "New save started for " + currentUsername;
+        }
+
+        private void LoadExistingSave()
+        {
+            SaveData saveData = sqlHandler.LoadGame(currentUsername);
+
+            if (saveData == null)
+            {
+                mainMenuMessage = "No save found. Press N to start a new save.";
+                return;
+            }
+
+            ApplySaveData(saveData);
+
+            gameStateManager.StartGame();
+
+            Window.Title = "Loaded save for " + currentUsername +
+                           " | Round: " + roundManager.CurrentRound +
+                           " | Money: " + playerStats.Money;
+        }
+
+        private void SaveCurrentGame()
+        {
+            if (string.IsNullOrWhiteSpace(currentUsername))
+            {
+                return;
+            }
+
+            SaveData saveData = new SaveData();
+
+            saveData.Round = roundManager.CurrentRound;
+            saveData.Money = playerStats.Money;
+            saveData.Health = playerStats.Health;
+
+            saveData.SpeedLevel = playerStats.SpeedLevel;
+            saveData.StrengthLevel = playerStats.StrengthLevel;
+            saveData.StaminaLevel = playerStats.StaminaLevel;
+            saveData.HealthLevel = playerStats.HealthLevel;
+
+            saveData.MapFile = "Maps/test_map.txt";
+
+            sqlHandler.SaveGame(currentUsername, saveData);
+
+            Window.Title = "Game saved for " + currentUsername;
+        }
+
+        private void ApplySaveData(SaveData saveData)
+        {
+            playerStats = new PlayerEntity();
+
+            playerStats.Money = saveData.Money;
+            playerStats.Health = saveData.Health;
+
+            playerStats.SpeedLevel = saveData.SpeedLevel;
+            playerStats.StrengthLevel = saveData.StrengthLevel;
+            playerStats.StaminaLevel = saveData.StaminaLevel;
+            playerStats.HealthLevel = saveData.HealthLevel;
+
+            playerStats.BaseSpeed = 120f + playerStats.SpeedLevel * 10f;
+            playerStats.MaxCarryWeight = 10f + playerStats.StrengthLevel * 2f;
+            playerStats.MaxStamina = 100f + playerStats.StaminaLevel * 20f;
+            playerStats.MaxHealth = 100 + playerStats.HealthLevel * 20;
+
+            if (playerStats.Health > playerStats.MaxHealth)
+            {
+                playerStats.Health = playerStats.MaxHealth;
+            }
+
+            playerStats.Stamina = playerStats.MaxStamina;
+            playerStats.CarriedWeight = 0f;
+
+            inventory = new Inventory(playerStats);
+
+            roundManager = new RoundManager();
+            roundManager.SetRound(saveData.Round);
+
+            extractionSystem = new ExtractionSystem();
+            extractionSystem.RequiredValue = roundManager.GetExtractionRequirement();
+
+            extractionGoalComplete = false;
+
+            tileMap = mapFileHandler.LoadMap(mapFilePath);
+            discoveredTiles = new bool[tileMap.Width, tileMap.Height];
+
+            playerPosition = FindSpawnPosition();
+
+            wraith = new Wraith();
+            wraithPosition = FindWraithSpawnPosition();
+            wraithHasTargetTile = false;
+            wraithDamageCooldown = 0f;
         }
 
         private void UpdatePlaying(GameTime gameTime, KeyboardState keyboard)
@@ -533,24 +823,84 @@ namespace PACMAN_R.E.P.O
 
         private Vector2 FindWraithSpawnPosition()
         {
-            // Första versionen: spawna Wraith långt från spawn, nära nedre högra delen av kartan.
+            Point playerTile = new Point(
+                (int)((playerPosition.X + playerSize.X / 2f) / TileSize),
+                (int)((playerPosition.Y + playerSize.Y / 2f) / TileSize)
+            );
+
             for (int x = tileMap.Width - 2; x >= 1; x--)
             {
                 for (int y = tileMap.Height - 2; y >= 1; y--)
                 {
-                    if (tileMap.Tiles[x, y].IsWalkable &&
-                        tileMap.Tiles[x, y].Type != TileType.Spawn &&
-                        tileMap.Tiles[x, y].Type != TileType.Extraction)
-                    {
-                        float spawnX = x * TileSize + (TileSize - wraithSize.X) / 2f;
-                        float spawnY = y * TileSize + (TileSize - wraithSize.Y) / 2f;
+                    Tile tile = tileMap.Tiles[x, y];
 
-                        return new Vector2(spawnX, spawnY);
+                    if (!tile.IsWalkable)
+                    {
+                        continue;
+                    }
+
+                    if (tile.Type == TileType.Spawn || tile.Type == TileType.Extraction)
+                    {
+                        continue;
+                    }
+
+                    Point wraithTile = new Point(x, y);
+
+                    List<Point> path = FindPath(wraithTile, playerTile);
+
+                    if (path.Count == 0)
+                    {
+                        continue;
+                    }
+
+                    float distanceFromPlayer = Vector2.Distance(
+                        GetTileCenter(x, y, wraithSize),
+                        playerPosition
+                    );
+
+                    if (distanceFromPlayer < TileSize * 8)
+                    {
+                        continue;
+                    }
+
+                    return GetTileCenter(x, y, wraithSize);
+                }
+            }
+
+            // Fallback om ingen bra position hittas
+            return FindFallbackWraithPosition(playerTile);
+        }
+
+        private Vector2 FindFallbackWraithPosition(Point playerTile)
+        {
+            for (int radius = 5; radius < 15; radius++)
+            {
+                for (int x = playerTile.X - radius; x <= playerTile.X + radius; x++)
+                {
+                    for (int y = playerTile.Y - radius; y <= playerTile.Y + radius; y++)
+                    {
+                        if (x < 0 || x >= tileMap.Width || y < 0 || y >= tileMap.Height)
+                        {
+                            continue;
+                        }
+
+                        if (!tileMap.Tiles[x, y].IsWalkable)
+                        {
+                            continue;
+                        }
+
+                        Point possibleTile = new Point(x, y);
+                        List<Point> path = FindPath(possibleTile, playerTile);
+
+                        if (path.Count > 0)
+                        {
+                            return GetTileCenter(x, y, wraithSize);
+                        }
                     }
                 }
             }
 
-            return new Vector2(TileSize * 5, TileSize * 5);
+            return GetTileCenter(playerTile.X, playerTile.Y, wraithSize);
         }
 
         private void UpdateCamera()
@@ -570,7 +920,15 @@ namespace PACMAN_R.E.P.O
 
             spriteBatch.Begin();
 
-            if (gameStateManager.CurrentState == GameState.Playing)
+            if (gameStateManager.CurrentState == GameState.Login)
+            {
+                DrawLoginHUD();
+            }
+            else if (gameStateManager.CurrentState == GameState.MainMenu)
+            {
+                DrawMainMenuHUD();
+            }
+            else if (gameStateManager.CurrentState == GameState.Playing)
             {
                 DrawMap();
                 DrawPlayer();
@@ -589,6 +947,65 @@ namespace PACMAN_R.E.P.O
             spriteBatch.End();
 
             base.Draw(gameTime);
+        }
+
+        private void DrawLoginHUD()
+        {
+            GraphicsDevice.Clear(Color.Black);
+
+            int x = 80;
+            int y = 80;
+            int lineHeight = 32;
+
+            string hiddenPassword = new string('*', passwordInput.Length);
+
+            spriteBatch.DrawString(hudFont, "LOGIN", new Vector2(x, y), Color.Gold);
+
+            y += lineHeight * 2;
+
+            Color usernameColor = typingPassword ? Color.White : Color.LightGreen;
+            Color passwordColor = typingPassword ? Color.LightGreen : Color.White;
+
+            spriteBatch.DrawString(hudFont, "Username: " + usernameInput, new Vector2(x, y), usernameColor);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "Password: " + hiddenPassword, new Vector2(x, y), passwordColor);
+            y += lineHeight * 2;
+
+            spriteBatch.DrawString(hudFont, "Tab: Switch field", new Vector2(x, y), Color.LightGray);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "Enter: Login", new Vector2(x, y), Color.LightGray);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "F2: Create account", new Vector2(x, y), Color.LightGray);
+            y += lineHeight * 2;
+
+            spriteBatch.DrawString(hudFont, loginMessage, new Vector2(x, y), Color.White);
+        }
+
+        private void DrawMainMenuHUD()
+        {
+            GraphicsDevice.Clear(Color.Black);
+
+            int x = 80;
+            int y = 80;
+            int lineHeight = 36;
+
+            spriteBatch.DrawString(hudFont, "PACMAN R.E.P.O", new Vector2(x, y), Color.Gold);
+
+            y += lineHeight * 2;
+
+            spriteBatch.DrawString(hudFont, "Logged in as: " + currentUsername, new Vector2(x, y), Color.White);
+            y += lineHeight * 2;
+
+            spriteBatch.DrawString(hudFont, "[N] Start New Save", new Vector2(x, y), Color.LightGreen);
+            y += lineHeight;
+
+            spriteBatch.DrawString(hudFont, "[L] Load Existing Save", new Vector2(x, y), Color.LightBlue);
+            y += lineHeight * 2;
+
+            spriteBatch.DrawString(hudFont, mainMenuMessage, new Vector2(x, y), Color.White);
         }
 
         private void DrawGameOverHUD()
@@ -929,6 +1346,8 @@ namespace PACMAN_R.E.P.O
 
         private void FinishRound()
         {
+            SaveCurrentGame();
+
             gameStateManager.EnterShop();
 
             Window.Title = GetShopTitle("Round " + roundManager.CurrentRound + " complete!");
@@ -1024,7 +1443,14 @@ namespace PACMAN_R.E.P.O
 
             playerPosition = FindSpawnPosition();
 
+            wraith = new Wraith();
+            wraithPosition = FindWraithSpawnPosition();
+            wraithHasTargetTile = false;
+            wraithDamageCooldown = 0f;
+
             gameStateManager.StartGame();
+
+            SaveCurrentGame();
 
             Window.Title = "Round " + roundManager.CurrentRound +
                            " started. Required extraction value: " +
