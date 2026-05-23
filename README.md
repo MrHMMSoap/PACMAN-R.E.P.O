@@ -1037,14 +1037,153 @@ public class MonsterManager
 2. Planering och Process.
    Agil metodik
    Trello: https://trello.com/b/HBDpfcbs/2d-repo
+   Sprintdokumentation:
+Projektet började som ett 2D-spel inspirerat av R.E.P.O. och Pac-Man. I början arbetade vi mycket med planering, pixelgrafik, tilesets, föremål, karaktärer och monster. Vi började även arbeta i Unity för att försöka bygga spelet där.
 
-   Loggböcker
+Efter att ha arbetat med Unity märkte vi dock att programmet blev mer komplext än vad som passade projektets omfattning. Det blev även svårt att få den grafik vi tidigare hade skapat att komma till användning på ett effektivt sätt. Därför valde vi att byta från Unity till MonoGame i Visual Studio. Bytet gjorde projektet mer hanterbart och gav oss bättre kontroll över kod, grafik, kartor och system.
+
+Efter bytet fokuserade vi på att bygga upp spelet i Visual Studio med MonoGame. Där implementerade vi bland annat player, monsters, items, map, handler code, system code, SQL och text file handler.
+   Sprint 1: Planering, grundidé och tidiga skisser
+
+Period: 26/01 – 02/02
+
+Under den första sprinten fokuserade vi på att tydliggöra spelets grundidé och planera vilka delar som behövde utvecklas. Vi skissade viktiga upgrades och började uppdatera sprintplaneringen. Eftersom spelet skulle vara inspirerat av R.E.P.O. behövde vi fundera på vilka funktioner som var centrala, exempelvis föremål, monster, uppgraderingar, kartor och spelarens rörelse.
+
+Vi började även arbeta med huvudkaraktärens design. Målet var att skapa en spelare som fungerade i ett 2D-perspektiv och som senare kunde animeras i olika riktningar.
+
+Resultat:
+Vi fick en tydligare bild av spelets struktur och vilka funktioner som skulle prioriteras. Huvudkaraktärens design och animation påbörjades och blev en grund för kommande arbete.
+
+Sprint 2: Huvudkaraktär och kartprototyp
+
+Period: 02/02 – 09/02
+
+I denna sprint färdigställdes huvudkaraktärens grunddesign och animation. Arbetet fokuserade även på att skapa en första prototyp av kartans layout. Kartan behövde fungera för ett spel där spelaren rör sig i korridorer och rum, samtidigt som monster ska kunna jaga spelaren utan att banan blir för öppen.
+
+Vi började också skapa valuables, alltså värdefulla föremål som spelaren ska kunna samla in. Dessa är viktiga eftersom de ger spelaren ett mål under rundan och skapar likheter med R.E.P.O. där insamling av värdefulla objekt är centralt.
+
+Resultat:
+En första kartlayout blev färdig och arbetet med föremål påbörjades. Huvudkaraktärens visuella grund var också klar.
+
+Sprint 3: Tilesets och igenkänningstest
+
+Period: 09/02 – 02/03
+
+Under denna sprint arbetade vi framför allt med miljögrafiken. Ett floor tileset skapades, där olika variationer av golvrutor togs fram. Vi fokuserade på detaljer som sprickor, smuts och variationer i golvet för att miljön inte skulle kännas för upprepande.
+
+Vi genomförde även ett test på Jonas och Vu för att undersöka om detaljerna i tilesetet gick att uppfatta. Testet visade att de kunde känna igen sprickor och smuts, vilket bekräftade att grafiken var tillräckligt tydlig trots den lilla pixelstorleken.
+
+Resultat:
+Floor tileset blev färdigt och testet visade att detaljerna fungerade visuellt. Arbetet med items fortsatte också framåt.
+
+Sprint 4: Väggar, dörrar och föremål
+
+Period: 02/03 – 09/03
+
+I denna sprint färdigställdes wall och door tileset. Väggarna och dörrarna var viktiga eftersom spelet bygger mycket på kartans struktur och spelarens rörelse genom rum och korridorer. Dörrar behövde också fungera tydligt visuellt, eftersom de påverkar hur spelaren och monster rör sig genom kartan.
+
+Samtidigt fortsatte arbetet med föremål. Vid slutet av sprinten var items nästan färdiga, med endast fyra kvar att skapa.
+
+Resultat:
+Vägg- och dörrgrafik blev färdig, och majoriteten av föremålen var klara.
+
+Sprint 5: Unity-träning, valuables och monsterdesign
+
+Period: 09/03 – 23/03
+
+Under denna sprint fokuserade vi på Unity-träning och på att färdigställa valuables. Eftersom Unity skulle användas för en större del av spelets implementation behövde vi förstå arbetsflödet, till exempel import av sprites, animationer, tilemaps och rörelse.
+
+Vi började även arbeta med monster. Monsterdesignen blev färdig och vi påbörjade animationer för huvudkaraktären i flera riktningar. Eftersom spelet skulle ha ett top-down-perspektiv behövde karaktären fungera bättre i flera riktningar än en sidovy-sprite.
+
+Resultat:
+Valuables blev färdiga, monsterdesignen blev klar och huvudkaraktärens animationer utvecklades vidare. Spelarens rörelse påbörjades.
+
+Sprint 6: Unity-projekt och grundläggande spelarfunktioner
+
+Period: 13/04 – 20/04
+
+Efter tidigare planering och grafiskt arbete började vi nu arbeta mer direkt i Unity-projektet. Spelarkaraktären blev färdig i projektet och PlayerMovement färdigställdes. Detta var en central del av spelet eftersom all vidare gameplay bygger på att spelaren kan röra sig korrekt.
+
+Vi började också arbeta med AnimationHandler, vilket skulle hantera spelarens animationer beroende på rörelse och tillstånd. Utöver detta färdigställdes trucken och extraction point påbörjades. Dessa delar är viktiga för spelets målstruktur, eftersom de kopplar till att avsluta eller lämna rundan.
+
+Resultat:
+Unity-projektet var igång, spelarens rörelse fungerade och flera centrala objekt började implementeras.
+
+Sprint 7: Objekt, monster och omarbetning av karaktär
+
+Period: 20/04 – 27/04
+
+Under denna sprint färdigställdes flera viktiga spelobjekt, bland annat cart, healthpack, extraction point och monsters. Vi arbetade också med att förbättra karaktären till en mer korrekt 2D/top-down-stil, eftersom tidigare sprites inte passade helt med spelets perspektiv.
+
+Item shop påbörjades, vilket var kopplat till spelets uppgraderingssystem och inspirationen från R.E.P.O.. Samtidigt behövde Unity-karaktären återställas eller justeras, eftersom ändringar i grafik och animationer skapade behov av att uppdatera tidigare implementation.
+
+Resultat:
+Flera viktiga objekt blev färdiga och monster implementerades visuellt. Karaktären förbättrades för att bättre passa spelets perspektiv.
+
+Sprint 8: Byte från Unity till MonoGame, SQL och tester
+
+Period: 27/04 – 04/05
+
+I denna sprint planerades den slutgiltiga sprintplanen. Efter att ha arbetat i Unity insåg vi att Unity blev för komplext för projektets omfattning. Det blev också svårt att få den grafik vi tidigare hade skapat att användas på ett effektivt sätt. Därför valde vi att byta till MonoGame i Visual Studio.
+
+Bytet gjorde att vi kunde arbeta mer direkt med kod, grafik och system. Vi började använda GitHub för versionshantering och implementerade även SQL och unit tests. SQL användes för att kunna spara speldata, till exempel spelarens HP, upgrades, pengar och vilken runda spelaren är på. Unit tests infördes för att kunna testa viktiga delar av koden.
+
+Resultat:
+Projektet bytte teknisk riktning från Unity till MonoGame. Det gjorde projektet mer hanterbart och gav bättre kontroll över spelets kod, grafik och system.
+
+Sprint 9: Slutimplementation och sammansättning
+
+Period: 04/05 – 18/05
+
+Under den sista sprinten färdigställdes arbetet i Visual Studio. Vi lade till monster, spelare, items, map, handler code, system code, SQL och text file handler. Detta innebar att många separata delar av projektet kopplades samman till ett mer komplett system.
+
+Arbetet handlade inte bara om att skapa nya funktioner, utan också om att få olika delar att fungera tillsammans. Exempelvis behövde spelaren kunna röra sig på kartan, monster behövde existera i spelvärlden, items behövde kunna hanteras och sparsystemet behövde kunna lagra information.
+
+Resultat:
+De viktigaste systemen blev färdiga och projektet nådde en mer komplett spelbar struktur.
+
+En tydlig styrka i projektet var att vi arbetade stegvis. Vi började med planering och grafik innan vi gick vidare till implementation, vilket gjorde att vi hade en tydligare bild av vad spelet skulle innehålla. Pixelgrafiken utvecklades successivt, och vi testade även om andra personer kunde uppfatta detaljer som sprickor och smuts i tilesetet. Detta gjorde att vi kunde bekräfta att grafiken fungerade i praktiken.
+
+En annan styrka var att vi lärde oss flera olika tekniska verktyg under projektets gång. Vi arbetade med Unity, Visual Studio, MonoGame, SQLite, GitHub och unit tests. Detta gjorde projektet mer avancerat än enbart ett enkelt 2D-spel, eftersom vi även arbetade med system för sparning, kodstruktur och testning.
+
+Det var också positivt att vi anpassade projektet när problem uppstod. Ett exempel var att spelarens sprite först inte passade perspektivet, eftersom den var mer från sidan än uppifrån. Istället för att behålla en lösning som inte fungerade visuellt valde vi att ändra karaktären så att den passade bättre med spelets top-down-känsla.
+
+En av de största utmaningarna var att Unity blev för komplext för projektets omfattning. Vi hade redan skapat mycket grafik, till exempel tilesets, items, karaktärer och monster, men i Unity blev det svårt att få allt detta att användas på ett effektivt sätt. Det gjorde att en del av det tidigare arbetet inte kom till sin rätt.
+
+På grund av detta valde vi att byta från Unity till MonoGame i Visual Studio. Detta innebar att vi behövde ändra vår tekniska riktning, men det gjorde också projektet mer hanterbart. I MonoGame fick vi större kontroll över hur grafiken, kartan, spelaren och systemen skulle fungera.
+
+Detta byte tog extra tid, men det var samtidigt en viktig lösning eftersom det gjorde att projektet kunde fortsätta på ett mer realistiskt sätt.
+
+Om vi hade börjat om projektet hade vi tidigare undersökt vilken spelmotor eller vilket ramverk som passade bäst för projektets storlek och vår erfarenhetsnivå. Unity hade många möjligheter, men blev för komplext i förhållande till vad vi behövde skapa. Därför hade det varit bättre att tidigare välja MonoGame i Visual Studio, eftersom det passade bättre för ett enklare 2D-spel där vi själva ville kontrollera grafik, karta och kodstruktur.
+
+Vi hade också kunnat testa tidigare om vår pixelgrafik fungerade bra i den valda spelmiljön. Då hade vi snabbare märkt om grafiken gick att använda på ett effektivt sätt eller om arbetsflödet behövde ändras.
+
+Loggbok
+Datum	Arbete som utfördes	Resultat / reflektion
+26/01	Skissade viktiga upgrades och uppdaterade sprintplaneringen.	Projektets struktur blev tydligare och vi började definiera vilka funktioner spelet skulle innehålla.
+02/02	Huvudkaraktärens design och animation blev färdig.	Vi hade en grundläggande spelarkaraktär att bygga vidare på.
+09/02	Kartlayoutens prototyp blev färdig och arbetet med valuables påbörjades.	Spelets bana började ta form och vi kunde börja koppla gameplay till kartan.
+02/03	Floor tileset blev färdigt. Items utvecklades vidare. Test genomfördes på Jonas och Vu.	Testpersonerna kunde känna igen sprickor och smuts i tilesetet, vilket visade att detaljerna fungerade.
+09/03	Wall och door tileset blev färdiga. Items var nästan färdiga, med fyra kvar.	Miljögrafiken blev mer komplett och kartan kunde byggas mer tydligt.
+16/03	Unity-träning genomfördes. Valuables blev färdiga och monster påbörjades.	Vi började förstå Unity-flödet bättre och kunde fortsätta med spelmekaniken.
+23/03	Unity-träning fortsatte. Monsterdesign blev färdig. Huvudkaraktärens animationer och rörelse påbörjades.	Projektet gick från grafisk förberedelse till mer aktiv implementation.
+13/04	Unity-projektet påbörjades och spelarkaraktären färdigställdes.	En fungerande grund i Unity skapades.
+20/04	AnimationHandler påbörjades. PlayerMovement blev färdig. Truck blev färdig och extraction point påbörjades.	Spelarens rörelse och spelets målstruktur började fungera.
+27/04	Cart, healthpack, extraction point, monsters och en mer korrekt 2D-karaktär blev färdiga. Item shop påbörjades. Unity-karaktären återställdes/justerades.	Flera centrala objekt färdigställdes, men vissa delar behövde justeras på grund av ändringar i grafik och perspektiv.
+04/05	Slutgiltig sprintplan planerades. Monsteranimationer gjordes. GitHub och Visual Studio användes. MonoGame, SQL och unit tests implementerades. Övrig implementation påbörjades.	Projektet fick en mer teknisk och strukturerad grund med versionshantering, databas och testning.
+18/05	Visual Studio-delen färdigställdes. Monster, player, items, map, handler code, system code, SQL och text file handler lades till.	De viktigaste systemen kopplades ihop och projektet blev mer komplett.
+
+Arbetet började med planering och grafisk design. Vi skapade skisser, upgrades, tilesets, items, karaktärer och monster. Därefter började vi arbeta i Unity, där vi tränade på sprites, animationer och rörelse.
+
+Efter ett tag märkte vi att Unity blev för komplext för projektets omfattning. Dessutom kom den grafik vi tidigare hade skapat inte till användning på det sätt vi hade tänkt. Därför valde vi att byta till MonoGame i Visual Studio. Detta blev en viktig vändpunkt i projektet.
+
+I MonoGame kunde vi fortsätta utveckla spelet på ett mer kontrollerat sätt. Vi implementerade player, monsters, items, map, handler code, system code, SQL och text file handler. Genom detta gick projektet från grafisk planering och Unity-testning till en mer kodbaserad och fungerande spelstruktur i Visual Studio.
 
 
    Prototyp
    https://www.figma.com/design/jRU1S67BdP8DMdenU5A5vL/Map?node-id=0-1&t=WknZQ6mavfXpnPQJ-0
 
-3. Testning och säkerhet.
+4. Testning och säkerhet.
    # Testrapport - PACMAN R.E.P.O
 
 **Projektnamn:** PACMAN R.E.P.O  
